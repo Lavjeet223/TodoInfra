@@ -1,0 +1,40 @@
+stages:
+  - stage: Manaual_Validation_Apply_Stage
+    displayName: Manaual_Validation_Apply_Stage
+    # condition: and(succeeded(), eq(variables['build.SourceBranchName'],'main'))
+    jobs:
+      - job: Manaual_Validation_Apply_Job
+        displayName: Manaual_Validation_Apply_Job
+        pool: server
+        steps:
+          - task: ManualValidation@1
+            displayName: ManualValidation
+            inputs:
+              notifyUsers: 'lavjeet22@gmail.com'
+              approvers: 'chanchal@lavjeet22gmail.onmicrosoft.com'
+              instructions: 'Please validate and approve'
+
+      - job: Terraform_Apply_Job
+        dependsOn: Manaual_Validation_Apply_Job
+        displayName: Terraform_Apply_Job
+        steps:
+          - task: TerraformTask@5
+            displayName: Terraform Init
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(WORK_DIR)'
+              backendAzureRmUseEntraIdForAuthentication: false
+              backendServiceArm: 'RadhaSC'
+              backendAzureRmResourceGroupName: 'Backend'
+              backendAzureRmStorageAccountName: 'backendstg112233'
+              backendAzureRmContainerName: 'tfstate'
+              backendAzureRmKey: '${{parameters.environment}}.terraform.tfstate'
+
+          - task: TerraformTask@5
+            displayName: Terraform Apply
+            inputs:
+              provider: 'azurerm'
+              command: 'apply'
+              workingDirectory: '$(WORK_DIR)'
+              environmentServiceNameAzureRM: 'RadhaSC'

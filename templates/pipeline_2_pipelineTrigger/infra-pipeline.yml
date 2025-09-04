@@ -1,0 +1,54 @@
+trigger: none # disable direct trigger
+pr: none
+
+resources:
+  pipelines:
+    - pipeline: scanPipeline   # Alias name
+      source: scan-pipeline    # Name of first pipeline in ADO
+      trigger:
+        branches:
+          include:
+            - '*'                  # Trigger on any branch completion of scan-pipeline  
+
+
+
+pool: Mahakal1 
+
+variables:
+  - name: WORK_DIR
+    value: '$(System.DefaultWorkingDirectory)/environment/prod'
+
+stages:
+    - stage: Terraform_Init_Validate_Plan_Stage
+      displayName: Terraform Init + Validate + Plan Stage
+      jobs:
+        - job: Terraform_Init_Validate_Plan_Job
+          displayName: Terraform Init + Validate + Plan Job
+          steps:
+            - task: TerraformTask@5
+              displayName: Terraform Init
+              inputs:
+                provider: 'azurerm'
+                command: 'init'
+                workingDirectory: '$(WORK_DIR)'
+                backendAzureRmUseEntraIdForAuthentication: false
+                backendServiceArm: 'RadhaSC'
+                backendAzureRmResourceGroupName: 'Backend'
+                backendAzureRmStorageAccountName: 'backendstg112233'
+                backendAzureRmContainerName: 'tfstate'
+                backendAzureRmKey: 'prod.terraform.tfstate'
+            
+            - task: TerraformTask@5
+              displayName: Terraform Validate
+              inputs:
+                provider: 'azurerm'
+                command: 'validate'
+                workingDirectory: '$(WORK_DIR)'
+        
+            - task: TerraformTask@5
+              displayName: Terraform Plan
+              inputs:
+                provider: 'azurerm'
+                command: 'plan'
+                workingDirectory: '$(WORK_DIR)'
+                environmentServiceNameAzureRM: 'RadhaSC'

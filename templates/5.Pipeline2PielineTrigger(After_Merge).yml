@@ -1,0 +1,35 @@
+name: 5.Pipeline2PielineTrigger(After_Merge)
+trigger: none # disable direct trigger
+pr: none
+pool: Mahakal1
+
+resources:
+  pipelines:
+    - pipeline: AfterScanPlanPipeline   # Alias name
+      source: 4.PrTrigger(buildTrigger)    # Name of first pipeline in ADO
+      trigger:
+        branches:
+          include:
+            - '*'                  # Trigger on any branch completion of scan-pipeline  
+
+parameters:
+  - name: environment
+    default: prod
+
+
+variables:
+  - name: WORK_DIR
+    value: '$(System.DefaultWorkingDirectory)/environment/prod'
+
+
+stages:
+  
+
+  - template: PlanStage.yml
+    parameters:
+      environment: ${{ parameters.environment }}
+    
+  - template: ApplyStage(AfterMerge).yml
+    parameters:
+      environment: ${{ parameters.environment }}
+   

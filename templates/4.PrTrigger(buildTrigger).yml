@@ -1,0 +1,21 @@
+name: 4.PrTrigger(buildTrigger)
+pool: Mahakal1
+trigger: none
+
+parameters:
+  - name: environment
+    default: prod
+
+
+variables:
+  - name: WORK_DIR
+    value: '$(System.DefaultWorkingDirectory)/environment/prod'
+
+
+stages:
+  - template: ScanStage.yml
+
+  - template: PlanStage.yml
+    parameters:
+      environment: ${{ parameters.environment }}
+    

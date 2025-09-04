@@ -1,0 +1,104 @@
+name: BranchBasedTriggeredPipeline
+pool: Mahakal1
+trigger:
+    branches:
+        include:
+            - feature/lav*
+
+
+
+variables:
+  - name: WORK_DIR
+    value: '$(System.DefaultWorkingDirectory)/environment/prod'
+
+
+stages:
+  - stage: Security_Scanning_Stage
+    displayName: Security Scanning Stage 
+    jobs:
+      - job: tfSec_scanning_job
+        displayName: Security Scanning Job
+        steps:
+          - task: tfsec@1
+            displayName: TfSec Scanning
+            inputs:
+              version: 'v1.26.0'
+              dir: '$(System.DefaultWorkingDirectory)/modules'
+            
+
+  - stage: Terraform_Init_Validate_Plan_Stage
+    displayName: Terraform Init + Validate + Plan Stage
+    jobs:
+      - job: Terraform_Init_Validate_Plan_Job
+        displayName: Terraform Init + Validate + Plan Job
+        steps:
+        - task: TerraformTask@5
+          displayName: Terraform Init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(WORK_DIR)'
+            backendAzureRmUseEntraIdForAuthentication: false
+            backendServiceArm: 'RadhaSC'
+            backendAzureRmResourceGroupName: 'Backend'
+            backendAzureRmStorageAccountName: 'backendstg112233'
+            backendAzureRmContainerName: 'tfstate'
+            backendAzureRmKey: 'prod.terraform.tfstate'
+        
+        - task: TerraformTask@5
+          displayName: Terraform Validate
+          inputs:
+            provider: 'azurerm'
+            command: 'validate'
+            workingDirectory: '$(WORK_DIR)'
+    
+        - task: TerraformTask@5
+          displayName: Terraform Plan
+          inputs:
+            provider: 'azurerm'
+            command: 'plan'
+            workingDirectory: '$(WORK_DIR)'
+            environmentServiceNameAzureRM: 'RadhaSC'
+
+  - stage: Manaual_Validation_Apply_Stage
+    displayName: Manaual_Validation_Apply_Stage
+    condition: and(succeeded(), eq(variables['build.SourceBranchName'],'main'))
+    jobs:
+      - job: Manaual_Validation_Apply_Job
+        displayName: Manaual_Validation_Apply_Job
+        pool: server
+        steps:
+          - task: ManualValidation@1
+            displayName: ManualValidation
+            inputs:
+              notifyUsers: 'lavjeet22@gmail.com'
+              approvers: 'chanchal@lavjeet22gmail.onmicrosoft.com'
+              instructions: 'Please validate and approve'
+
+      - job: Terraform_Apply_Job
+        dependsOn: Manaual_Validation_Apply_Job
+        displayName: Terraform_Apply_Job
+        steps:
+          - task: TerraformTask@5
+            displayName: Terraform Init
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(WORK_DIR)'
+              backendAzureRmUseEntraIdForAuthentication: false
+              backendServiceArm: 'RadhaSC'
+              backendAzureRmResourceGroupName: 'Backend'
+              backendAzureRmStorageAccountName: 'backendstg112233'
+              backendAzureRmContainerName: 'tfstate'
+              backendAzureRmKey: 'prod.terraform.tfstate'
+
+          - task: TerraformTask@5
+            displayName: Terraform Apply
+            inputs:
+              provider: 'azurerm'
+              command: 'apply'
+              workingDirectory: '$(WORK_DIR)'
+              environmentServiceNameAzureRM: 'RadhaSC'
+
+
+              

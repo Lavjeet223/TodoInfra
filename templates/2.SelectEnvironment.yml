@@ -1,0 +1,32 @@
+name: 2.SelectEnvironment
+pool: Mahakal1
+trigger: none
+
+parameters:
+  - name: environment
+    displayName: Select Environment
+    default: dev
+    type: string
+    values:
+      - prod
+      - dev
+      - qa
+
+variables:
+  - name: WORK_DIR
+    value: '$(System.DefaultWorkingDirectory)/environment/${{ parameters.environment }}'
+
+
+stages:
+  - template: ScanStage.yml
+
+  - template: PlanStage.yml
+    parameters:
+      environment: ${{ parameters.environment }}
+    
+  - template: ApplyStage.yml
+    parameters:
+      environment: ${{ parameters.environment }}
+
+
+

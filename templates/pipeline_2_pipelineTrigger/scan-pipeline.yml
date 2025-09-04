@@ -1,0 +1,25 @@
+trigger: none
+# pr:
+#   branches:
+#     include:
+#       - main  # When PR raise to merger Main branch ### targeting main
+
+pool: Mahakal1 
+
+variables:
+  - name: WORK_DIR
+    value: '$(System.DefaultWorkingDirectory)/environment/prod'
+
+
+stages:
+  - stage: Security_Scanning_Stage
+    displayName: Security Scanning Stage 
+    jobs:
+      - job: tfSec_scanning_job
+        displayName: Security Scanning Job
+        steps:
+          - task: tfsec@1
+            displayName: TfSec Scanning
+            inputs:
+              version: 'v1.26.0'
+              dir: '$(System.DefaultWorkingDirectory)/modules'

@@ -1,0 +1,28 @@
+name: 1.Trigger_None
+pool: Mahakal1
+trigger: none
+
+parameters:
+  - name: environment
+    default: prod
+
+
+variables:
+  - name: WORK_DIR
+    value: '$(System.DefaultWorkingDirectory)/environment/prod'
+
+
+stages:
+  - template: ScanStage.yml
+
+  - template: PlanStage.yml
+    parameters:
+      environment: ${{ parameters.environment }}
+    
+  - template: ApplyStage.yml
+    parameters:
+      environment: ${{ parameters.environment }}
+   
+
+
+
