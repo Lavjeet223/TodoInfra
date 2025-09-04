@@ -1,0 +1,14 @@
+name: Feature_branch_push
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+
+jobs:
+  terraform:
+    runs-on: lavjeet
+    name: Terraform Job
+    steps:
+      - name: test task checking
+        run: echo "just checking the task"
