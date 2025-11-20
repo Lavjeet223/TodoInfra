@@ -7,7 +7,7 @@ on:
 
 jobs:
   terraform:
-    runs-on: lavjeet
+    runs-on: GitHubRunner
     name: Terraform Job
     steps:
       - name: test task checking
